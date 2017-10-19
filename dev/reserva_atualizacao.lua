@@ -1,15 +1,19 @@
--- tentativa de fazer um wget. Funciona para pequenos arquivios,tentar corrigir para qualquer tamanho
+local updatemanager = {};
 
-wget = function(endereco,caminho,saida,porta)
+
+local function wget(endereco,arquivo,porta)
     porta = porta or 80;
-    saida = saida or "output-wget";
+	local primeira_barra = string.find(endereco,'/');
+	local caminho = string.sub(endereco, primeira_barra) .. arquivo;
+	endereco = string.sub(endereco, 0, primeira_barra - 1);
     local is_first_package = true;
-    print("salvando "..endereco..":"..porta..caminho.." em "..saida.."!");
-    file.open(saida, "w");
+    print(endereco, caminho, arquivo, porta);
+    file.open(arquivo, "w");
 	print("Abriu Arquivo\n");
     s=net.createConnection(net.TCP, 0);
     s:on("receive", function(sck, c)
         --Cortando o cabecalho 
+        --PEGAR O TAMANHO DO TEXTO NO HTTP E CHAMAR CALLBACK QUANDO ACABAR
         if(is_first_package) then
             local beginning = string.find(c,"\r\n\r\n");
             if beginning ~= nil then
@@ -22,7 +26,7 @@ wget = function(endereco,caminho,saida,porta)
         file.flush();
         print("Criou arquivo");
         end )
-    s:on("disconnection", function(c) c = nil; file.close(); end)
+    s:on("disconnection", function() file.close(); print("Fechou arquivo"); end)
 	s:on("connection", function()
 		print("Conectou\n")
 		s:send("GET "..caminho.." HTTPS/1.1\r\n"..
@@ -39,6 +43,13 @@ wget = function(endereco,caminho,saida,porta)
 	print("Inicio\n");
 end
 
+function updatemanager.update()
+	bleEnable(0, function(err)
+        wget("mbboing.github.io/iot-no-varejo/", "test.txt");
+		--bleEnable(1, files_sent);
+    end);
+end
+
 --https://raw.githubusercontent.com/paoloo/nodeMCU-sh/master/wget.lua
 
 station_cfg={};
@@ -49,8 +60,7 @@ wifi.start();
 wifi.sta.config(station_cfg);
 wifi.sta.on("got_ip", function(ev, info)
     print("WiFi Connected\n");
-	--wget("151.101.92.133", "/paoloo/nodeMCU-sh/master/wget.lua", "output.txt", 443);
-	--wget("raw.githubusercontent.com", "/afbranco/Terra/master/README.md", "output.txt", 443);
-	--wget("testbed.inf.puc-rio.br","/index.lua", "output.txt", 443);
-    wget("mbboing.github.io", "/iot-no-varejo/test.txt", "output.txt");
+    wget("mbboing.github.io/iot-no-varejo/", "test.txt");
 end);
+
+--return updatemanager;

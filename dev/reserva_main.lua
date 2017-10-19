@@ -6,13 +6,17 @@ bleEnable = function(flag,cb)bthci.scan.enable(flag,cb); end;
 
 beacons = require "reserva_beacons";
 netmanager = require "reserva_rede";
+updatemanager = require "reserva_atualizacao";
 config = require "reserva_config";
 
 local mainTimer = tmr.create();
+local updateTimer = tmr.create();
 local bluetooth_period = config.bluetooth_period;
 local upload_period = config.upload_period;
 local bluetooh_period_counter = -1;
 local firstInit = false;
+local firstMinute = true;
+local is_update_time = false;
 local initHeap = node.heap();
 local lastHeap = initHeap;
 log_list = {};
@@ -42,13 +46,33 @@ function reset()
 	end);
 end
 
+function is_upload_time()
+	print("\n\n\nFunção is_upload_time\n\n\n");
+	if firstMinute == true then
+		firstMinute = false;
+	else
+		local h = tonumber(node.date("%H"));
+		local min = tonumber(node.date("%M"));
+		if (h*60+min)%config.update_period then
+			print("\n\n\nUpdate Time!!!!!\n\n\n");
+			is_update_time = true;
+		end
+	end
+	updateTimer:alarm(60000, tmr.ALARM_SINGLE, is_upload_time);
+end
+
 function buffer_saved()
     mainTimer:alarm(config.bluetooth_period * 1000, tmr.ALARM_SINGLE, alarm_fired);
 end
 
 function files_sent()
-    beacons.saveBuffer(buffer_saved,bluetooh_period_counter);
-    mainTimer:alarm(config.bluetooth_period * 1000, tmr.ALARM_SINGLE, alarm_fired);
+    if is_update_time == true then
+        is_update_time = false;
+        updatemanager.update();
+    else
+        beacons.saveBuffer(buffer_saved,bluetooh_period_counter);
+        --mainTimer:alarm(config.bluetooth_period * 1000, tmr.ALARM_SINGLE, alarm_fired);
+	end
 end
 
 function alarm_fired()
@@ -77,6 +101,7 @@ function net_ready()
     if firstInit == false then
         firstInit = true;
         beacons.start(beacons_ready);
+		updateTimer:alarm(60000, tmr.ALARM_SINGLE, is_upload_time);
     end
 end;
 
