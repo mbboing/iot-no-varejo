@@ -1,14 +1,28 @@
 -- tentativa de fazer um wget. Funciona para pequenos arquivios,tentar corrigir para qualquer tamanho
 
 wget = function(endereco,caminho,saida,porta)
-    porta = porta or 80
-    saida = saida or "output-wget"
-    print("salvando "..endereco..":"..porta..caminho.." em "..saida.."!")
-    file.open(saida, "w")
+    porta = porta or 80;
+    saida = saida or "output-wget";
+    local is_first_package = true;
+    print("salvando "..endereco..":"..porta..caminho.." em "..saida.."!");
+    file.open(saida, "w");
 	print("Abriu Arquivo\n");
-    s=net.createConnection(net.TCP, 0)
-    s:on("receive", function(sck, c) file.write(c) file.flush() print("Criou arquivo") end )
-    s:on("disconnection", function(c) c = nil; file.close() end)
+    s=net.createConnection(net.TCP, 0);
+    s:on("receive", function(sck, c)
+        --Cortando o cabecalho 
+        if(is_first_package) then
+            local beginning = string.find(c,"\r\n\r\n");
+            if beginning ~= nil then
+                print(beginning);
+                c = string.sub(c,beginning+4);
+                is_first_package = false;
+            end;
+        end;
+        file.write(c);
+        file.flush();
+        print("Criou arquivo");
+        end )
+    s:on("disconnection", function(c) c = nil; file.close(); end)
 	s:on("connection", function()
 		print("Conectou\n")
 		s:send("GET "..caminho.." HTTPS/1.1\r\n"..
@@ -21,8 +35,8 @@ wget = function(endereco,caminho,saida,porta)
 		end)
 	print("Registrou callbacks\n");
 	print("Port:",porta);
-    s:connect(porta, endereco)
-	print("Inicio\n")
+    s:connect(porta, endereco);
+	print("Inicio\n");
 end
 
 --https://raw.githubusercontent.com/paoloo/nodeMCU-sh/master/wget.lua
@@ -36,6 +50,7 @@ wifi.sta.config(station_cfg);
 wifi.sta.on("got_ip", function(ev, info)
     print("WiFi Connected\n");
 	--wget("151.101.92.133", "/paoloo/nodeMCU-sh/master/wget.lua", "output.txt", 443);
-	wget("raw.githubusercontent.com", "/afbranco/Terra/master/README.md", "output.txt", 443);
+	--wget("raw.githubusercontent.com", "/afbranco/Terra/master/README.md", "output.txt", 443);
 	--wget("testbed.inf.puc-rio.br","/index.lua", "output.txt", 443);
+    wget("mbboing.github.io", "/iot-no-varejo/test.txt", "output.txt");
 end);
