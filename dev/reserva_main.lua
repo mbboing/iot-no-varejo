@@ -16,7 +16,7 @@ local upload_period = config.upload_period;
 local bluetooh_period_counter = -1;
 local firstInit = false;
 local firstMinute = true;
-local is_update_time = false;
+local update_time = false;
 local initHeap = node.heap();
 local lastHeap = initHeap;
 log_list = {};
@@ -46,8 +46,7 @@ function reset()
 	end);
 end
 
-function is_upload_time()
-	print("\n\n\nFunção is_upload_time\n\n\n");
+function is_update_time()
 	if firstMinute == true then
 		firstMinute = false;
 	else
@@ -55,10 +54,10 @@ function is_upload_time()
 		local min = tonumber(node.date("%M"));
 		if (h*60+min)%config.update_period then
 			print("\n\n\nUpdate Time!!!!!\n\n\n");
-			is_update_time = true;
+			update_time = true;
 		end
 	end
-	updateTimer:alarm(60000, tmr.ALARM_SINGLE, is_upload_time);
+	updateTimer:alarm(60000, tmr.ALARM_SINGLE, is_update_time);
 end
 
 function buffer_saved()
@@ -66,9 +65,10 @@ function buffer_saved()
 end
 
 function files_sent()
-    if is_update_time == true then
-        is_update_time = false;
-        updatemanager.update();
+    if update_time == true then
+        update_time = false;
+        print("Fazer o update");
+        updatemanager.update(files_sent);
     else
         beacons.saveBuffer(buffer_saved,bluetooh_period_counter);
         --mainTimer:alarm(config.bluetooth_period * 1000, tmr.ALARM_SINGLE, alarm_fired);
@@ -101,7 +101,7 @@ function net_ready()
     if firstInit == false then
         firstInit = true;
         beacons.start(beacons_ready);
-		updateTimer:alarm(60000, tmr.ALARM_SINGLE, is_upload_time);
+		updateTimer:alarm(60000, tmr.ALARM_SINGLE, is_update_time);
     end
 end;
 

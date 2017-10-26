@@ -4,6 +4,8 @@ local versao_local, versao_atual;
 local arquivos = {};
 local qnt_arquivos_baixados = 0;
 
+local function update_files_done() print("Sem callback da atualizacao de arquivos") end;
+
 local function compara_datas(data1, data2)
 	local ano1, mes1, dia1, hora1, min1 = string.match(data1,'(%d+):(%d+):(%d+):(%d+):(%d+)');
 	local ano2, mes2, dia2, hora2, min2 = string.match(data1,'(%d+):(%d+):(%d+):(%d+):(%d+)');
@@ -14,17 +16,27 @@ local function compara_datas(data1, data2)
 	return (data_numerica_1 > data_numerica_2);
 end
 
+local function cancel_update()
+    --Remeve os arquivos temporarios
+    for file_name,_ in pairs(file.list()) do
+        if string.find(file_name,"_temp.") then
+            file.remove(file_name);
+        end
+    end
+    bleEnable(1, update_files_done);
+    print("Cancel update");
+end
+
 local function wget(endereco, arquivo, saida, callback, porta)
     porta = porta or 80;
 	local primeira_barra = string.find(endereco,'/');
 	local caminho = string.sub(endereco, primeira_barra) .. arquivo;
 	endereco = string.sub(endereco, 0, primeira_barra - 1);
+	local file_content = {}
 	local file_size = 0;
     local total_size = 0;
     local is_first_package = true;
     print(endereco, caminho, arquivo, saida, porta);
-    file.open(saida, "w");
-	print("Abriu Arquivo\n");
     s=net.createConnection(net.TCP, 0);
     s:on("receive", function(sck, c)
         if(is_first_package) then
@@ -41,17 +53,21 @@ local function wget(endereco, arquivo, saida, callback, porta)
             end;
         end;
         
-        file.write(c);
-        file.flush();
+		table.insert(file_content, c);
         
         file_size = file_size + string.len(c);
         print("Tamanho lido: ", file_size .. '/' .. total_size);
         if file_size >= total_size then
+			--Cria o arquivo com o conteudo lido
+    		file.open(saida, "w");
+			for k,_ in pairs(file_content) do
+				file.write(c);
+			end
             file.close();
             callback(total_size);
         end
     end )
-    s:on("disconnection", function() file.close(); callback(0); end)
+    s:on("disconnection", function() callback(0); end)
 	s:on("connection", function()
 		print("Conectou\n")
 		s:send("GET "..caminho.." HTTPS/1.1\r\n"..
@@ -96,7 +112,7 @@ local function update_next_file(last_file_size)
     		reset();
 		end
 	else
-		bleEnable(1, files_sent)
+		cancel_update();
 	end
 
 end
@@ -105,7 +121,9 @@ local function check_version()
 	versao_local = dofile("versao.lua");
 	versao_atual = dofile("versao_temp.lua");
 
+    print("Checando versoes");
 	if compara_datas(versao_atual.data, versao_local.data) then
+        print("Versao desatualizada");
 		-- Fazer a atualizacao dos arquivos
 		for k,_ in pairs(versao_atual) do
 			if k ~= "data" then
@@ -114,11 +132,18 @@ local function check_version()
 		end
 		local file_name = arquivos[qnt_arquivos_baixados+1];
 		wget("mbboing.github.io/iot-no-varejo/", file_name, string.gsub(file_name,".","_temp."), update_next_file);
+    else
+        print("Versão atual");
+        cancel_update();
 	end
 
 end
 
-function updatemanager.update()
+function updatemanager.update(updatefiles_cb)
+    if type(updatefiles_cb)=="function" then
+        print("Parametro eh uma funcao");
+        update_files_done = updatefiles_cb;
+    end
 	bleEnable(0, function(err)
 		print("Desligou o bluetooth");
         wget("mbboing.github.io/iot-no-varejo/", "versao.lua", "versao_temp.lua", check_version);
@@ -135,7 +160,7 @@ wifi.start();
 wifi.sta.config(station_cfg);
 wifi.sta.on("got_ip", function(ev, info)
     print("WiFi Connected\n");
-    wget("mbboing.github.io/iot-no-varejo/", "versao.lua", "versao_temp.lua", check_version);
+    wget("mbboing.github.io/iot-no-varejo/", "versao.lua", "versao_temp.lua");
 end);
 
 --return updatemanager;
