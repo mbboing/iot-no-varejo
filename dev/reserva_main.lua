@@ -50,9 +50,10 @@ function is_update_time()
 	if firstMinute == true then
 		firstMinute = false;
 	else
+        local d = tonumber(node.date("%d"));
 		local h = tonumber(node.date("%H"));
 		local min = tonumber(node.date("%M"));
-		if (h*60+min)%config.update_period then
+		if ((d*24+h)*60+min)%config.update_period then
 			print("\n\n\nUpdate Time!!!!!\n\n\n");
 			update_time = true;
 		end
@@ -78,6 +79,7 @@ end
 function alarm_fired()
     local remaining, used, total=file.fsinfo()
     local currHeap = node.heap();
+    print("Versao 1");
     uart.write(0,"\n**** Heap=".. currHeap .. " " .. string.format("%.2f",(currHeap/initHeap)*100) .. "% [" .. lastHeap - currHeap .. "] Remaining disk=".. remaining)
     lastHeap = currHeap;
     if  node.heap() < 20000 then 

@@ -60,8 +60,8 @@ local function wget(endereco, arquivo, saida, callback, porta)
         if file_size >= total_size then
 			--Cria o arquivo com o conteudo lido
     		file.open(saida, "w");
-			for k,_ in pairs(file_content) do
-				file.write(c);
+			for _,i in pairs(file_content) do
+				file.write(i);
 			end
             file.close();
             callback(total_size);
@@ -96,7 +96,7 @@ local function update_next_file(last_file_size)
 		else
 			--Remove os arquivos antigos, menos o de configuracao de wifi
 			for file_name,_ in pairs(file.list()) do
-     			if string.find(file_name,"_temp.") == nil and file_name ~= "reserva_wifi_config.lua" then
+     			if string.find(file_name,"_temp.") == nil and file_name ~= "reserva_wifi_config.lua" and file_name ~= "init.lua" then
           			file.remove(file_name)
      			end
 			end
@@ -152,15 +152,15 @@ end
 
 --https://raw.githubusercontent.com/paoloo/nodeMCU-sh/master/wget.lua
 
-station_cfg={};
-station_cfg.ssid="terra_iot";
-station_cfg.pwd="projeto_iot";
-wifi.mode(wifi.STATION);
-wifi.start();
-wifi.sta.config(station_cfg);
-wifi.sta.on("got_ip", function(ev, info)
-    print("WiFi Connected\n");
-    wget("mbboing.github.io/iot-no-varejo/", "versao.lua", "versao_temp.lua");
-end);
+--station_cfg={};
+--station_cfg.ssid="terra_iot";
+--station_cfg.pwd="projeto_iot";
+--wifi.mode(wifi.STATION);
+--wifi.start();
+--wifi.sta.config(station_cfg);
+--wifi.sta.on("got_ip", function(ev, info)
+--    print("WiFi Connected\n");
+--    wget("mbboing.github.io/iot-no-varejo/", "versao.lua", "versao_temp.lua");
+--end);
 
---return updatemanager;
+return updatemanager;
