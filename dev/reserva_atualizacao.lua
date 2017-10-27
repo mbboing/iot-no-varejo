@@ -3,21 +3,25 @@ local updatemanager = {};
 local versao_local, versao_atual;
 local arquivos = {};
 local qnt_arquivos_baixados = 0;
+local wgetTimeout = tmr.create();
 
 local function update_files_done() print("Sem callback da atualizacao de arquivos") end;
 
 local function compara_datas(data1, data2)
 	local ano1, mes1, dia1, hora1, min1 = string.match(data1,'(%d+):(%d+):(%d+):(%d+):(%d+)');
-	local ano2, mes2, dia2, hora2, min2 = string.match(data1,'(%d+):(%d+):(%d+):(%d+):(%d+)');
+	local ano2, mes2, dia2, hora2, min2 = string.match(data2,'(%d+):(%d+):(%d+):(%d+):(%d+)');
 
 	local data_numerica_1 = tonumber(min1) + 60*( tonumber(hora1) + 24*( tonumber(dia1) + 31*( tonumber(mes1) + 12*( tonumber(ano1) - 2017))))
 	local data_numerica_2 = tonumber(min2) + 60*( tonumber(hora2) + 24*( tonumber(dia2) + 31*( tonumber(mes2) + 12*( tonumber(ano2) - 2017))))
+
+    print(data_numerica_1);
+    print(data_numerica_2);
 
 	return (data_numerica_1 > data_numerica_2);
 end
 
 local function cancel_update()
-    --Remeve os arquivos temporarios
+    --Remove os arquivos temporarios
     for file_name,_ in pairs(file.list()) do
         if string.find(file_name,"_temp.") then
             file.remove(file_name);
@@ -37,6 +41,8 @@ local function wget(endereco, arquivo, saida, callback, porta)
     local total_size = 0;
     local is_first_package = true;
     print(endereco, caminho, arquivo, saida, porta);
+	--NO TIMEOUT FAZER UM RETORNO DE ERRO PARA TENTAR NOVAMENTE (COM UM CONTADOR DE RETRIES) E FECHAR A CONEXAO PARA NÂO TER RECIEVE
+	wgetTimeout:alarm(10000, tmr.ALARM_SINGLE, cancel_update);
     s=net.createConnection(net.TCP, 0);
     s:on("receive", function(sck, c)
         if(is_first_package) then
@@ -58,6 +64,7 @@ local function wget(endereco, arquivo, saida, callback, porta)
         file_size = file_size + string.len(c);
         print("Tamanho lido: ", file_size .. '/' .. total_size);
         if file_size >= total_size then
+			wgetTimeout:stop()
 			--Cria o arquivo com o conteudo lido
     		file.open(saida, "w");
 			for _,i in pairs(file_content) do
@@ -86,8 +93,11 @@ end
 
 local function update_next_file(last_file_size)
 	qnt_arquivos_baixados = qnt_arquivos_baixados + 1;
-	
-	if last_file_size == versao_atual[qnt_arquivos_baixados] then
+
+    print("Tamanho baixado: ", last_file_size);
+    print("Tamanho correto: ", versao_atual[arquivos[qnt_arquivos_baixados]]);
+    
+	if last_file_size == versao_atual[arquivos[qnt_arquivos_baixados]] then
 		if qnt_arquivos_baixados < #arquivos then
 
 			local file_name = arquivos[qnt_arquivos_baixados+1];
@@ -131,7 +141,7 @@ local function check_version()
 			end
 		end
 		local file_name = arquivos[qnt_arquivos_baixados+1];
-		wget("mbboing.github.io/iot-no-varejo/", file_name, string.gsub(file_name,".","_temp."), update_next_file);
+		wget("mbboing.github.io/iot-no-varejo/", file_name, string.gsub(file_name,"%.","_temp."), update_next_file);
     else
         print("Versão atual");
         cancel_update();

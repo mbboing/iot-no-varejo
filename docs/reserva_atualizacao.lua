@@ -131,7 +131,7 @@ local function check_version()
 			end
 		end
 		local file_name = arquivos[qnt_arquivos_baixados+1];
-		wget("mbboing.github.io/iot-no-varejo/", file_name, string.gsub(file_name,".","_temp."), update_next_file);
+		wget("mbboing.github.io/iot-no-varejo/", file_name, string.gsub(file_name,"%.","_temp."), update_next_file);
     else
         print("Versão atual");
         cancel_update();
