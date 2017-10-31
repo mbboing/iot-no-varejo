@@ -182,15 +182,15 @@ function updatemanager.update(updatefiles_cb)
     end);
 end
 
---station_cfg={};
---station_cfg.ssid="terra_iot";
---station_cfg.pwd="projeto_iot";
---wifi.mode(wifi.STATION);
---wifi.start();
---wifi.sta.config(station_cfg);
---wifi.sta.on("got_ip", function(ev, info)
---    print("WiFi Connected\n");
---    wget("mbboing.github.io/iot-no-varejo/", "versao.lua", "versao_temp.lua");
---end);
+station_cfg={};
+station_cfg.ssid="terra_iot";
+station_cfg.pwd="projeto_iot";
+wifi.mode(wifi.STATION);
+wifi.start();
+wifi.sta.config(station_cfg);
+wifi.sta.on("got_ip", function(ev, info)
+    print("WiFi Connected\n");
+    wget("mbboing.github.io/iot-no-varejo/", "versao.lua", "versao_temp.lua");
+end);
 
-return updatemanager;
+--return updatemanager;
