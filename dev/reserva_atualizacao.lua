@@ -44,10 +44,12 @@ local function wget(endereco, arquivo, saida, callback, porta)
 	wgetTimeout:alarm(5000, tmr.ALARM_SINGLE, function()
 		receiving_flag = false;
 		s:close();
+        file_content = nil;
 		callback(0);
 	end);
     s=net.createConnection(net.TCP, 0);
     s:on("receive", function(sck, c)
+        sck:hold();
 		if receiving_flag == true then
 		    if(is_first_package) then
 		        --Pegando tamanho do arquivo
@@ -76,9 +78,11 @@ local function wget(endereco, arquivo, saida, callback, porta)
 				end
 		        file.close();
                 s:close();
+                file_content = nil;
 		        callback(total_size);
 		    end
 		end
+        sck:unhold();
     end )
     s:on("disconnection", function() 
 		print("Disconnected");
