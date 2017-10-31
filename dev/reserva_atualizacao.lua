@@ -57,7 +57,7 @@ local function wget(endereco, arquivo, saida, callback, porta)
 		        --Cortando o cabecalho 
 		        local beginning = string.find(c,"\r\n\r\n");
 		        if beginning ~= nil then
-		            print(beginning);
+		            print(c,0,beginning);
 		            c = string.sub(c,beginning+4);
 		            is_first_package = false;
 		        end;
