@@ -57,7 +57,7 @@ local function wget(endereco, arquivo, saida, callback, porta)
 		        --Cortando o cabecalho 
 		        local beginning = string.find(c,"\r\n\r\n");
 		        if beginning ~= nil then
-		            print(c,0,beginning);
+		            print(string.sub(c,0,beginning));
 		            c = string.sub(c,beginning+4);
 		            is_first_package = false;
 		        end;
@@ -75,6 +75,7 @@ local function wget(endereco, arquivo, saida, callback, porta)
 					file.write(i);
 				end
 		        file.close();
+                s:close();
 		        callback(total_size);
 		    end
 		end
@@ -176,5 +177,16 @@ function updatemanager.update(updatefiles_cb)
         wget("mbboing.github.io/iot-no-varejo/", "versao.lua", "versao_temp.lua", check_version);
     end);
 end
+
+--station_cfg={};
+--station_cfg.ssid="terra_iot";
+--station_cfg.pwd="projeto_iot";
+--wifi.mode(wifi.STATION);
+--wifi.start();
+--wifi.sta.config(station_cfg);
+--wifi.sta.on("got_ip", function(ev, info)
+--    print("WiFi Connected\n");
+--    wget("mbboing.github.io/iot-no-varejo/", "versao.lua", "versao_temp.lua");
+--end);
 
 return updatemanager;
