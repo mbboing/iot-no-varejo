@@ -21,12 +21,14 @@ local initHeap = node.heap();
 local lastHeap = initHeap;
 log_list = {};
 
+--Funcao que insere uma mensagem na tabela de logs a serem enviados
 function log(string)
 	if #log_list < 100 then
     	table.insert(log_list,node.date("%Y-%m-%d %H:%M:%S.000\t"..string));
 	end
 end
 
+--Funcao para resetar o sistema, mas salvando antes os logs em um arquivo
 function reset()
 	bleEnable(0, function(err)
     	-- Salva arqivo de logs:
@@ -46,6 +48,7 @@ function reset()
 	end);
 end
 
+--Funcao que verifica se esta na hora de fazer a atualizacao remota
 function is_update_time()
 	if firstMinute == true then
 		firstMinute = false;
@@ -61,10 +64,12 @@ function is_update_time()
 	updateTimer:alarm(60000, tmr.ALARM_SINGLE, is_update_time);
 end
 
+--Callback de quando o buffer dos beacons forem salvos em um arquivo
 function buffer_saved()
     mainTimer:alarm(config.bluetooth_period * 1000, tmr.ALARM_SINGLE, alarm_fired);
 end
 
+--Callback de quando os arquivos forem enviados
 function files_sent()
     if update_time == true then
         update_time = false;
@@ -76,6 +81,7 @@ function files_sent()
 	end
 end
 
+--Callback chamada pelo alarme periodico, salva o buffer dos beacons ou faz upload dos arquivos e printa a memória para debug
 function alarm_fired()
     local remaining, used, total=file.fsinfo()
     local currHeap = node.heap();
@@ -95,10 +101,12 @@ function alarm_fired()
     end;
 end;
 
+--Callback de quando o bluetooth estiver configurado. Ativa um alarme periodico
 function beacons_ready()
     mainTimer:alarm(config.bluetooth_period * 1000, tmr.ALARM_SINGLE, alarm_fired);
 end;
 
+--Callback de quando a rede estiver configurada
 function net_ready()
     if firstInit == false then
         firstInit = true;
@@ -107,4 +115,5 @@ function net_ready()
     end
 end;
 
+--Primeira funcao a ser executada, inicializacao da configuracao de rede
 netmanager.start(net_ready);
