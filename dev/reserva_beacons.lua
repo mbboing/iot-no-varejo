@@ -5,6 +5,7 @@ local msg_list={}
 local beacons_timeout = tmr.create();
 local beacons_timeout_time = 60*1000; -- 1 minute * factor (see below)
 
+--Funcao que printa erro ou ok
 local function print_status(err, name)
     if err then
         print(name .. " error: " .. err);
@@ -13,21 +14,7 @@ local function print_status(err, name)
    end
 end
 
-local function distance(rssi, txpower)
-    --This is based on the algorithm from http://stackoverflow.com/questions/20416218/understanding-ibeacon-distancing
-    local distance = 0;
-    local ratio_linear = 0;
-    local ratio = (256 - rssi)/(256 - txpower);
-
-    if ratio < 10 then
-        distance = ratio ^ 10;
-    else
-        distance = (0.89976)*(ratio^7.7095) + 0.111;
-    end
-
-    return distance;
-end
-
+--Funcao que formata o disco mantendo os arquivos salvos
 local function restoreFS()
     -- Read current files name and load its contents to memory (only "reserva_*")
     local l = file.list();
@@ -69,6 +56,7 @@ local function restoreFS()
     reset();
 end
 
+--Funcao que faz o parsing do sinal recebido do beacon e insere a mensagem no buffer
 local function parsing(advertisement)
     local hour = node.date("*t").hour;
     local factor = ((hour >= 0 and hour <= 7) and 30) or 5;
@@ -88,7 +76,6 @@ local function parsing(advertisement)
         adv.txpower =  buf[36+offset];
         adv.addr = string.sub(advertisement,3,8);
         adv.uuid = string.sub(advertisement,16+offset,31+offset);
-        adv.dist = distance(adv.rssi, adv.txpower);
 
         if beacons_recebidos[adv.addr] == nil then 
             beacons_recebidos[adv.addr]={}; 
@@ -103,6 +90,7 @@ local function parsing(advertisement)
     end
 end
 
+--Funcao que inicializa o bluetooth e a captura de beacons
 function beacons.start(start_done)
     bthci.scan.setparams({mode=0,interval=100,window=90}, 
         function(err) print_status(err,"ParamsSet"); 
@@ -115,6 +103,7 @@ function beacons.start(start_done)
     beacons_timeout:alarm(beacons_timeout_time * factor, tmr.ALARM_SINGLE, function() log("Rebooting: Beacons Timeout!"); reset(); end);
 end
 
+--Funcao que salva o conteudo do buffer de beacons em um arquivo no disco
 function beacons.saveBuffer(savebuffer_cb,seq)
 	--log("Test do reset");
 	--reset();

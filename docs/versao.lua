@@ -1,14 +1,15 @@
 local versao = {
 
 --["data"] = "AAAA:MM:DD:HH:mm"
-["data"] = "2017:10:27:13:15",
+["data"] = "2017:10:31:13:58",
 
 --["nome_do_arquivo"] = tamanho do arquido em bytes
-["reserva_atualizacao.lua"] = 5357,
-["reserva_beacons.lua"] = 5837,
+["reserva_atualizacao.lua"] = 6517,
+["reserva_beacons.lua"] = 5681,
 ["reserva_config.lua"] = 220,
-["reserva_main.lua"] = 3063,
-["reserva_rede.lua"] = 8562
+["reserva_main.lua"] = 3718,
+["reserva_rede.lua"] = 4232,
+["reserva_submit.lua"] = 4750
 
 }
 
