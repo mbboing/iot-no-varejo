@@ -108,7 +108,7 @@ end
 
 local function update_next_file(last_file_size)
 
-    --if last_file_size >= versao_atual[arquivos[qnt_arquivos_baixados + 1]] then
+    if last_file_size >= versao_atual[arquivos[qnt_arquivos_baixados + 1]] then
 		qnt_arquivos_baixados = qnt_arquivos_baixados + 1;
 		wget_retries = 0;
 		if qnt_arquivos_baixados < #arquivos then
@@ -134,15 +134,15 @@ local function update_next_file(last_file_size)
    			log("Files updated.");
     		reset();
 		end
-	--else
-	--	wget_retries = wget_retries + 1;
-	--	if wget_retries < 5 then
-	--		local file_name = arquivos[qnt_arquivos_baixados+1];
-	--		wget("mbboing.github.io/iot-no-varejo/", file_name, string.gsub(file_name,".lua","_temp.lua"), update_next_file);
-	--	else
-	--		cancel_update();
-	--	end;
-	--end
+	else
+		wget_retries = wget_retries + 1;
+		if wget_retries < 5 then
+			local file_name = arquivos[qnt_arquivos_baixados+1];
+			wget("mbboing.github.io/iot-no-varejo/", file_name, string.gsub(file_name,".lua","_temp.lua"), update_next_file);
+		else
+			cancel_update();
+		end;
+	end
 
 end
 
