@@ -66,7 +66,9 @@ end
 
 --Callback de quando o buffer dos beacons forem salvos em um arquivo
 function buffer_saved()
-    mainTimer:alarm(config.bluetooth_period * 1000, tmr.ALARM_SINGLE, alarm_fired);
+    --mainTimer:alarm(config.bluetooth_period * 1000, tmr.ALARM_SINGLE, alarm_fired);
+	--SOMENTE PARA TESTE:
+	updatemanager.update(files_sent);
 end
 
 --Callback de quando os arquivos forem enviados

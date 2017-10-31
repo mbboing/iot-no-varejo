@@ -59,7 +59,7 @@ local function wget(endereco, arquivo, saida, callback, porta)
 		        --Cortando o cabecalho 
 		        local beginning = string.find(c,"\r\n\r\n");
 		        if beginning ~= nil then
-		            print(string.sub(c,0,beginning));
+		            --print(string.sub(c,0,beginning));
 		            c = string.sub(c,beginning+4);
 		            is_first_package = false;
 		        end;
@@ -108,7 +108,7 @@ end
 
 local function update_next_file(last_file_size)
 
-    if last_file_size >= versao_atual[arquivos[qnt_arquivos_baixados + 1]] then
+    --if last_file_size >= versao_atual[arquivos[qnt_arquivos_baixados + 1]] then
 		qnt_arquivos_baixados = qnt_arquivos_baixados + 1;
 		wget_retries = 0;
 		if qnt_arquivos_baixados < #arquivos then
@@ -134,15 +134,15 @@ local function update_next_file(last_file_size)
    			log("Files updated.");
     		reset();
 		end
-	else
-		wget_retries = wget_retries + 1;
-		if wget_retries < 5 then
-			local file_name = arquivos[qnt_arquivos_baixados+1];
-			wget("mbboing.github.io/iot-no-varejo/", file_name, string.gsub(file_name,".lua","_temp.lua"), update_next_file);
-		else
-			cancel_update();
-		end;
-	end
+	--else
+	--	wget_retries = wget_retries + 1;
+	--	if wget_retries < 5 then
+	--		local file_name = arquivos[qnt_arquivos_baixados+1];
+	--		wget("mbboing.github.io/iot-no-varejo/", file_name, string.gsub(file_name,".lua","_temp.lua"), update_next_file);
+	--	else
+	--		cancel_update();
+	--	end;
+	--end
 
 end
 
@@ -162,6 +162,20 @@ local function check_version(file_size)
 			end
 			local file_name = arquivos[qnt_arquivos_baixados+1];
 			wget("mbboing.github.io/iot-no-varejo/", file_name, string.gsub(file_name,"%.","_temp."), update_next_file);
+
+			--[[wget("mbboing.github.io/iot-no-varejo/", "reserva_beacons.lua", "beacons1.lua", function()
+					wget("mbboing.github.io/iot-no-varejo/", "reserva_beacons.lua", "beacons2.lua", function()
+						wget("mbboing.github.io/iot-no-varejo/", "reserva_beacons.lua", "beacons3.lua", function()
+						    wget("mbboing.github.io/iot-no-varejo/", "reserva_beacons.lua", "beacons4.lua", function()
+						        wget("mbboing.github.io/iot-no-varejo/", "reserva_beacons.lua", "beacons5.lua", function()
+						            wget("mbboing.github.io/iot-no-varejo/", "reserva_beacons.lua", "beacons6.lua");
+						        end);
+						    end);
+						end);
+					end);
+				end);
+]]--
+
 		else
 		    print("Versão atual");
 		    cancel_update();
@@ -182,15 +196,25 @@ function updatemanager.update(updatefiles_cb)
     end);
 end
 
-station_cfg={};
-station_cfg.ssid="terra_iot";
-station_cfg.pwd="projeto_iot";
-wifi.mode(wifi.STATION);
-wifi.start();
-wifi.sta.config(station_cfg);
-wifi.sta.on("got_ip", function(ev, info)
-    print("WiFi Connected\n");
-    wget("mbboing.github.io/iot-no-varejo/", "versao.lua", "versao_temp.lua");
-end);
+--station_cfg={};
+--station_cfg.ssid="terra_iot";
+--station_cfg.pwd="projeto_iot";
+--wifi.mode(wifi.STATION);
+--wifi.start();
+--wifi.sta.config(station_cfg);
+--wifi.sta.on("got_ip", function(ev, info)
+--    print("WiFi Connected\n");
+--    wget("mbboing.github.io/iot-no-varejo/", "reserva_beacons.lua", "beacons1.lua", function()
+--        wget("mbboing.github.io/iot-no-varejo/", "reserva_beacons.lua", "beacons2.lua", function()
+--            wget("mbboing.github.io/iot-no-varejo/", "reserva_beacons.lua", "beacons3.lua", function()
+--                wget("mbboing.github.io/iot-no-varejo/", "reserva_beacons.lua", "beacons4.lua", function()
+--                    wget("mbboing.github.io/iot-no-varejo/", "reserva_beacons.lua", "beacons5.lua", function()
+--                        wget("mbboing.github.io/iot-no-varejo/", "reserva_beacons.lua", "beacons6.lua");
+--                    end);
+--                end);
+--            end);
+--        end);
+--    end);
+--end);
 
---return updatemanager;
+return updatemanager;
