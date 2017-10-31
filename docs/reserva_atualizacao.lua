@@ -15,10 +15,7 @@ local function compara_datas(data1, data2)
 	local data_numerica_1 = tonumber(min1) + 60*( tonumber(hora1) + 24*( tonumber(dia1) + 31*( tonumber(mes1) + 12*( tonumber(ano1) - 2017))))
 	local data_numerica_2 = tonumber(min2) + 60*( tonumber(hora2) + 24*( tonumber(dia2) + 31*( tonumber(mes2) + 12*( tonumber(ano2) - 2017))))
 
-    print(data_numerica_1);
-    print(data_numerica_2);
-
-	return (data_numerica_1 > data_numerica_2);
+    return (data_numerica_1 > data_numerica_2);
 end
 
 local function cancel_update()
@@ -70,16 +67,6 @@ local function wget(endereco, arquivo, saida, callback, porta)
 		    
 		    file_size = file_size + string.len(c);
 		    print("Tamanho lido: ", file_size .. '/' .. total_size);
-			if file_size > 5000 then
-				--Escreve no arquivo o conteudo lido
-                --REMOVER ESSA PARTE QUANDO RESOLVER O WGET DO RESERVA_REDE
-				file.open(saida, "w");
-				for k,i in pairs(file_content) do
-					file.write(i);
-					table.remove(file_content, k);
-				end
-		        file.close();
-		    end
 		    if file_size >= total_size then
 				wgetTimeout:stop()
 				--Cria o arquivo com o conteudo lido
@@ -116,10 +103,7 @@ end
 
 local function update_next_file(last_file_size)
 
-    print("Tamanho baixado: ", last_file_size);
-    print("Tamanho correto: ", versao_atual[arquivos[qnt_arquivos_baixados + 1]]);
-    
-	if last_file_size >= versao_atual[arquivos[qnt_arquivos_baixados + 1]] then
+    if last_file_size >= versao_atual[arquivos[qnt_arquivos_baixados + 1]] then
 		qnt_arquivos_baixados = qnt_arquivos_baixados + 1;
 		wget_retries = 0;
 		if qnt_arquivos_baixados < #arquivos then
@@ -192,18 +176,5 @@ function updatemanager.update(updatefiles_cb)
         wget("mbboing.github.io/iot-no-varejo/", "versao.lua", "versao_temp.lua", check_version);
     end);
 end
-
---https://raw.githubusercontent.com/paoloo/nodeMCU-sh/master/wget.lua
-
---station_cfg={};
---station_cfg.ssid="terra_iot";
---station_cfg.pwd="projeto_iot";
---wifi.mode(wifi.STATION);
---wifi.start();
---wifi.sta.config(station_cfg);
---wifi.sta.on("got_ip", function(ev, info)
---    print("WiFi Connected\n");
---    wget("mbboing.github.io/iot-no-varejo/", "versao.lua", "versao_temp.lua");
---end);
 
 return updatemanager;

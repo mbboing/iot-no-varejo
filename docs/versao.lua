@@ -4,7 +4,7 @@ local versao = {
 ["data"] = "2017:10:31:13:58",
 
 --["nome_do_arquivo"] = tamanho do arquido em bytes
-["reserva_atualizacao.lua"] = 6517,
+["reserva_atualizacao.lua"] = 5627,
 ["reserva_beacons.lua"] = 5681,
 ["reserva_config.lua"] = 220,
 ["reserva_main.lua"] = 3718,
