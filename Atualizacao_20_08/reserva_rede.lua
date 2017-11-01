@@ -1,5 +1,3 @@
-wificonfig = require "reserva_wifi_config";
-
 local netmanager = {};
 
 local last_file;
@@ -11,8 +9,6 @@ local http_list = {}
 
 local sendFilesRetries=0;
 local wifiLost = true;
-
-local isLogUpload = false;
 
 
 local xml_1_a = [[
@@ -98,7 +94,7 @@ local function submit(msg_list)
 
 	local function errorHandler()
 		submit_timeout:unregister();
-        print("Error Handler State = ".. submit_state.. "in ".. getTime() - lastRequestTime);
+        print("Error Handler State = ", submit_state, "in ".. getTime() - lastRequestTime);
 		if submit_state == "CONREQUEST" or submit_state == "SENDING" then
 			submit_state = "IDLE"
 			if conn then conn:close(); end
@@ -112,12 +108,7 @@ local function submit(msg_list)
     conn:on("connection", function(conn1, payload)
 	    submit_state = "SENDING";
 
-		local nodeId = wifi.sta.getmac():gsub(":","");
-		if isLogUpload then
-			nodeId = nodeId .. "_LOG";
-		end
-
-        local xml_1 = xml_1_a .. wificonfig.token .. xml_1_b .. nodeId .. xml_1_c;
+        local xml_1 = xml_1_a .. config.token .. xml_1_b .. wifi.sta.getmac():gsub(":","") .. xml_1_c;
         local dataLen = xml_1:len() + xml_2:len();
         for k,msg in ipairs (msg_list) do
             dataLen = dataLen + msg:len();
@@ -196,10 +187,13 @@ function netmanager.sendfiles(sendfiles_cb)
     if type(sendfiles_cb)=="function" then
         send_files_done = sendfiles_cb;
     end
+--print("type cb/done:",type(sendfiles_cb),type(send_files_done))
 
-    -- Reconect the Esp32 if it continuously fails to send messages.
+    -- Restart the Esp32 if it continuously fails to send messages.
     sendFilesRetries = sendFilesRetries + 1;
-    if sendFilesRetries >= ((wifiLost and 3) or 10) then
+    if sendFilesRetries >= ((wifiLost and 3) or 10) then 
+        print("\nRestart the system - sendFilesRetries="..sendFilesRetries .. " wifiLost=", wifiLost)
+        --node.restart(); 
     	wifi.stop();
     end
     
@@ -226,11 +220,6 @@ function netmanager.sendfiles(sendfiles_cb)
 		            line = file.read();
                 end
 		        file.close();
-				if string.find(last_file,"Log") then
-					isLogUpload = true;
-				else
-					isLogUpload = false;
-				end
                 submit(msg_list);
 			else
                 sendFilesRetries = 0; -- reset the fails counter
@@ -246,13 +235,13 @@ end;
 function netmanager.start(start_cb)
     local sntpTimer = tmr.create();
     station_cfg={};
-    station_cfg.ssid=wificonfig.ssid;
-    station_cfg.pwd=wificonfig.pwd;
+    station_cfg.ssid=config.ssid;
+    station_cfg.pwd=config.pwd;
     wifi.mode(wifi.STATION);
     wifi.start();
     wifi.sta.config(station_cfg);
     wifi.sta.on("got_ip", function(ev, info)
-        log("WiFi Connected\n");
+        print("WiFi Connected\n");
         wifiLost = false;
         ajust_date(start_cb);
     end);
@@ -263,11 +252,11 @@ function netmanager.start(start_cb)
         local lastLost = wifiLost;
         wifiLost = (info.reason == 201 and true) or false;
         if wifiLost == true and lastLost == false then
-            log(" WiFi disconnected - Reason=" .. info.reason);
+            print(" WiFi disconnected - - state=".. submit_state .. " - Reason=" .. info.reason);
         end
     end);
     wifi.sta.on("stop", function(ev, info)
-        log("WiFi Stopped\n");
+        print("WiFi Stopped\n");
         wifi.start();
     end);
 end;
