@@ -21,7 +21,7 @@ end
 local files = {}
 
 for _,i in pairs(scandir(".")) do
-	if i ~= "." and i ~= ".." and i ~= "criarVersao.lua" and i ~= "index.html" and i ~= "_config.yml" and i ~= "versao.lua" then
+	if i ~= "." and i ~= ".." and i ~= "criarVersao.lua" and i ~= "versao.lua" then
 		f = io.open(i)
 		print(i, fsize(f))
 		files[i] = fsize(f)
@@ -31,6 +31,7 @@ end
 
 
 output = io.open("versao.lua","w")
+output:write("--Esse arquivo foi gerado automaticamente com o script \"criarVersao.lua\"\n\n")
 output:write("local versao = {\n\n--[\"data\"] = \"AAAA:MM:DD:HH:mm\"\n")
 output:write(os.date("[\"data\"] = \"%Y:%m:%d:%H:%M\",\n\n"))
 output:write("--[\"nome_do_arquivo\"] = tamanho do arquido em bytes\n")
