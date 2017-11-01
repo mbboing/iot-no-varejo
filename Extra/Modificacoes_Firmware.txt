@@ -1,0 +1,194 @@
+===============================================================
+file: wifi_ap.c
+New lua function: wifi.ap.getmac()
+
+// afb: implementing wifi.ap.getmac()
+static int wifi_ap_getmac (lua_State *L)
+{
+  uint8_t mac[6];
+  char macStr[MAC_STR_SZ];
+  esp_err_t err = esp_wifi_get_mac(WIFI_IF_AP, mac);
+
+  if (err == ESP_ERR_WIFI_NOT_INIT)
+    return luaL_error (L, "WiFi is not initialized by eps_wifi_init.");
+  if (err != ESP_OK)
+    return luaL_error (L, "failed to get MAC, code %d", err);
+
+  macstr (macStr,mac);
+  lua_pushstring (L, macStr);
+  return 1;
+}
+
+{ LSTRKEY( "getmac" ),              LFUNCVAL( wifi_ap_getmac )        },
+
+
+
+===============================================================
+file: wifi_sta.c
+New lua function: wifi.sta.getmac()
+
+// afb: implementing wifi.sta.getmac()
+static int wifi_sta_getmac (lua_State *L)
+{
+  uint8_t mac[6];
+  char macStr[MAC_STR_SZ];
+  esp_err_t err = esp_wifi_get_mac(WIFI_IF_STA, mac);
+
+  if (err == ESP_ERR_WIFI_NOT_INIT)
+    return luaL_error (L, "WiFi is not initialized by eps_wifi_init.");
+  if (err != ESP_OK)
+    return luaL_error (L, "failed to get MAC, code %d", err);
+
+  macstr (macStr,mac);
+  lua_pushstring (L, macStr);
+  return 1;
+}
+
+const LUA_REG_TYPE wifi_sta_map[] = {
+  { LSTRKEY( "getmac" ),      LFUNCVAL( wifi_sta_getmac )     },
+  { LSTRKEY( "config" ),      LFUNCVAL( wifi_sta_config )     },
+
+
+
+===============================================================
+file: wifi.c
+
+#include "lwip/err.h"
+#include "apps/sntp/sntp.h"
+
+New lua function: wifi.sntp()
+
+// afb: implementing wifi.sntp()
+static int wifi_sntp (lua_State *L)
+{
+    const char *timezone = luaL_checkstring(L, 1);
+    // Set timezone
+    setenv("TZ", timezone, 1);
+    tzset();
+    // call SNTP
+    sntp_setoperatingmode(SNTP_OPMODE_POLL);
+    sntp_setservername(0, "pool.ntp.org");
+    sntp_init();
+    return 0;
+}
+
+
+static const LUA_REG_TYPE wifi_map[] =
+{
+  { LSTRKEY( "sntp" ),     LFUNCVAL( wifi_sntp )        },
+  { LSTRKEY( "getchannel"),   LFUNCVAL( wifi_getchannel )     },
+
+
+
+
+
+===============================================================
+file: node.c
+
+#include "time.h"
+
+New lua function: node.date()
+
+
+// afb: Including date() to get current date/time value
+
+/*
+** {======================================================
+** Time/Date operations
+** { year=%Y, month=%m, day=%d, hour=%H, min=%M, sec=%S,
+**   wday=%w+1, yday=%j, isdst=? }
+** =======================================================
+*/
+
+static void setfield (lua_State *L, const char *key, int value) {
+  lua_pushinteger(L, value);
+  lua_setfield(L, -2, key);
+}
+
+static void setboolfield (lua_State *L, const char *key, int value) {
+  if (value < 0)  /* undefined? */
+    return;  /* does not set field */
+  lua_pushboolean(L, value);
+  lua_setfield(L, -2, key);
+}
+
+// Lua: node.date()
+static int node_date (lua_State *L) {
+  const char *s = luaL_optstring(L, 1, "%c");
+  time_t t = luaL_opt(L, (time_t)luaL_checknumber, 2, time(NULL));
+  struct tm *stm;
+  if (*s == '!') {  /* UTC? */
+    stm = gmtime(&t);
+    s++;  /* skip `!' */
+  }
+  else
+    stm = localtime(&t);
+  if (stm == NULL)  /* invalid date? */
+    lua_pushnil(L);
+  else if (strcmp(s, "*t") == 0) {
+    lua_createtable(L, 0, 9);  /* 9 = number of fields */
+    setfield(L, "sec", stm->tm_sec);
+    setfield(L, "min", stm->tm_min);
+    setfield(L, "hour", stm->tm_hour);
+    setfield(L, "day", stm->tm_mday);
+    setfield(L, "month", stm->tm_mon+1);
+    setfield(L, "year", stm->tm_year+1900);
+    setfield(L, "wday", stm->tm_wday+1);
+    setfield(L, "yday", stm->tm_yday+1);
+    setboolfield(L, "isdst", stm->tm_isdst);
+  }
+  else {
+    char cc[3];
+    luaL_Buffer b;
+    cc[0] = '%'; cc[2] = '\0';
+    luaL_buffinit(L, &b);
+    for (; *s; s++) {
+      if (*s != '%' || *(s + 1) == '\0')  /* no conversion specifier? */
+        luaL_addchar(&b, *s);
+      else {
+        size_t reslen;
+        char buff[200];  /* should be big enough for any conversion result */
+        cc[1] = *(++s);
+        reslen = strftime(buff, sizeof(buff), cc, stm);
+        luaL_addlstring(&b, buff, reslen);
+      }
+    }
+    luaL_pushresult(&b);
+  }
+  return 1;
+}
+
+static const LUA_REG_TYPE node_map[] =
+{
+  {LSTRKEY("date"),      LFUNCVAL(node_date)},
+  { LSTRKEY( "chipid" ),    LFUNCVAL( node_chipid )    },
+
+
+===============================================================
+file: lauxib.c
+
+Inside function:
+static int panic (lua_State *L)
+
+Commented the line:
+while (1) {}
+
+===============================================================
+file: task.c
+Changed
+#define TASK_DEFAULT_QUEUE_LEN 8
+to
+#define TASK_DEFAULT_QUEUE_LEN 32
+
+
+===============================================================
+file: file.c
+Included line in function "static int file_open( lua_State* L )"
+
+lua_pushfstring(L, "%s: err(%d)", fname, vfs_ferrno(0)); // afb - returning the erro message
+return 2;
+
+
+after:
+  if(!file_fd){
+    lua_pushnil(L);
