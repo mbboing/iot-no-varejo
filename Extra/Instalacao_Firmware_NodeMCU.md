@@ -32,6 +32,7 @@ Component config, habilite o bluetooth, wifi e entre em NodeMCU modules.
 - Salve e saia do programa.
 - Gerar o build
 	make
+-Alterar os arquivos wifi_ap.c, wifi_sta.c, wifi.c, node.c, lauxib.c, task.c e file.c como indicado no arquivo em anexo Modificacoes_Firmware.txt
 
 FLASH:
 - Conecte o ESP ao usb
