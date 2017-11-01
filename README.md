@@ -1,5 +1,7 @@
 # iot-no-varejo
 
+Repositório do projeto IoT no Varejo desenvolvido pelo Laboratório de Engenharia de Software da PUC-Rio.
+
 O diretório /dev contém o código que está em desenvlvimento
 
 O diretório /doc contém os documentos da página do projeto. No momento contém somente os arquivos a serem baixados para a atualização remota.
