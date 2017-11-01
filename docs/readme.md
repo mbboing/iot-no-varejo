@@ -1,4 +1,4 @@
-# iot-no-varejo
+# docs
 
 Arquivos para gerar a página do github mbboing.github.io/iot-no-varejo/
 
