@@ -84,7 +84,7 @@ end
 function alarm_fired()
     local remaining, used, total=file.fsinfo()
     local currHeap = node.heap();
-    print("Versao 1");
+    print("Versao 2");
     uart.write(0,"\n**** Heap=".. currHeap .. " " .. string.format("%.2f",(currHeap/initHeap)*100) .. "% [" .. lastHeap - currHeap .. "] Remaining disk=".. remaining)
     lastHeap = currHeap;
     if  node.heap() < 20000 then 
