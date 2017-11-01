@@ -67,7 +67,7 @@ function uploadmanager.submit(msg_list)
 	    submit_state = "SENDING";
 
 		local nodeId = wifi.sta.getmac():gsub(":","");
-		if isLogUpload then
+		if uploadmanager.isLogUpload then
 			nodeId = nodeId .. "_LOG";
 		end
 

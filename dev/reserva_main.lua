@@ -118,7 +118,6 @@ end;
 if file.open("update_flag_file.txt",'r') then
     file.close();
     file.remove("update_flag_file.txt");
-    print("Fazer o update");
     updatemanager.update();
 else
     --Senão inicia o programa normalmente, comecando com a configuracao de rede

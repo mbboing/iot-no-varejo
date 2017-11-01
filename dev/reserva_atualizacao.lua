@@ -192,10 +192,8 @@ end
 
 --Funcao que cria o arquivo de flag para a atualizacao
 function updatemanager.setup_update()
-    print("Antes de criar o arquivo de flag");
     bleEnable(0, function()
         file.open("update_flag_file.txt",'w');
-        print("Depois de criar o arquivo de flag");
         file.close();
         reset();
     end);
