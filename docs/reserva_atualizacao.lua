@@ -1,3 +1,4 @@
+wificonfig = require "reserva_wifi_config";
 local updatemanager = {};
 
 local versao_local, versao_atual;
@@ -6,8 +7,7 @@ local qnt_arquivos_baixados = 0;
 local wget_retries = 0;
 local wgetTimeout = tmr.create();
 
-local function update_files_done() print("Sem callback da atualizacao de arquivos") end;
-
+--Funcao que retorna verdadeiro se a data 1 for posterior a data 2
 local function compara_datas(data1, data2)
 	local ano1, mes1, dia1, hora1, min1 = string.match(data1,'(%d+):(%d+):(%d+):(%d+):(%d+)');
 	local ano2, mes2, dia2, hora2, min2 = string.match(data2,'(%d+):(%d+):(%d+):(%d+):(%d+)');
@@ -18,6 +18,7 @@ local function compara_datas(data1, data2)
     return (data_numerica_1 > data_numerica_2);
 end
 
+--Funcao que cancela o processo de atualizacao dos arquivos
 local function cancel_update()
     --Remove os arquivos temporarios
     for file_name,_ in pairs(file.list()) do
@@ -25,10 +26,11 @@ local function cancel_update()
             file.remove(file_name);
         end
     end
-    bleEnable(1, update_files_done);
     print("Cancel update");
+    reset();
 end
 
+--Funcao que baixa um arquivo de um endereco dado
 local function wget(endereco, arquivo, saida, callback, porta)
     porta = porta or 80;
 	local primeira_barra = string.find(endereco,'/');
@@ -44,10 +46,12 @@ local function wget(endereco, arquivo, saida, callback, porta)
 	wgetTimeout:alarm(5000, tmr.ALARM_SINGLE, function()
 		receiving_flag = false;
 		s:close();
+        file_content = nil;
 		callback(0);
 	end);
     s=net.createConnection(net.TCP, 0);
     s:on("receive", function(sck, c)
+        sck:hold();
 		if receiving_flag == true then
 		    if(is_first_package) then
 		        --Pegando tamanho do arquivo
@@ -57,7 +61,7 @@ local function wget(endereco, arquivo, saida, callback, porta)
 		        --Cortando o cabecalho 
 		        local beginning = string.find(c,"\r\n\r\n");
 		        if beginning ~= nil then
-		            print(beginning);
+		            --print(string.sub(c,0,beginning));
 		            c = string.sub(c,beginning+4);
 		            is_first_package = false;
 		        end;
@@ -75,9 +79,12 @@ local function wget(endereco, arquivo, saida, callback, porta)
 					file.write(i);
 				end
 		        file.close();
+                s:close();
+                file_content = nil;
 		        callback(total_size);
 		    end
 		end
+        sck:unhold();
     end )
     s:on("disconnection", function() 
 		print("Disconnected");
@@ -101,6 +108,7 @@ local function wget(endereco, arquivo, saida, callback, porta)
 	print("Inicio\n");
 end
 
+--Funcao que gerencia qual deve ser o proximo arquivo a ser baixado
 local function update_next_file(last_file_size)
 
     if last_file_size >= versao_atual[arquivos[qnt_arquivos_baixados + 1]] then
@@ -109,7 +117,7 @@ local function update_next_file(last_file_size)
 		if qnt_arquivos_baixados < #arquivos then
 
 			local file_name = arquivos[qnt_arquivos_baixados+1];
-			wget("mbboing.github.io/iot-no-varejo/", file_name, string.gsub(file_name,".lua","_temp.lua"), update_next_file);
+			wget(config.update_addr, file_name, string.gsub(file_name,".lua","_temp.lua"), update_next_file);
 
 		else
 			--Remove os arquivos antigos, menos o de configuracao de wifi
@@ -133,7 +141,7 @@ local function update_next_file(last_file_size)
 		wget_retries = wget_retries + 1;
 		if wget_retries < 5 then
 			local file_name = arquivos[qnt_arquivos_baixados+1];
-			wget("mbboing.github.io/iot-no-varejo/", file_name, string.gsub(file_name,".lua","_temp.lua"), update_next_file);
+			wget(config.update_addr, file_name, string.gsub(file_name,".lua","_temp.lua"), update_next_file);
 		else
 			cancel_update();
 		end;
@@ -141,6 +149,7 @@ local function update_next_file(last_file_size)
 
 end
 
+--Funcao que compara os arquivos de versao e verifica se deve ser feita uma atualizacao
 local function check_version(file_size)
 	if file_size ~= 0 then
 		versao_local = dofile("versao.lua");
@@ -156,7 +165,8 @@ local function check_version(file_size)
 				end
 			end
 			local file_name = arquivos[qnt_arquivos_baixados+1];
-			wget("mbboing.github.io/iot-no-varejo/", file_name, string.gsub(file_name,"%.","_temp."), update_next_file);
+			wget(config.update_addr, file_name, string.gsub(file_name,"%.","_temp."), update_next_file);
+
 		else
 		    print("Versão atual");
 		    cancel_update();
@@ -166,14 +176,28 @@ local function check_version(file_size)
 	end
 end
 
+--Funcao que inicia o processo de atualizacao dos arquivos
 function updatemanager.update(updatefiles_cb)
-    if type(updatefiles_cb)=="function" then
-        print("Parametro eh uma funcao");
-        update_files_done = updatefiles_cb;
-    end
-	bleEnable(0, function(err)
-		print("Desligou o bluetooth");
-        wget("mbboing.github.io/iot-no-varejo/", "versao.lua", "versao_temp.lua", check_version);
+    station_cfg={};
+    station_cfg.ssid=wificonfig.ssid;
+    station_cfg.pwd=wificonfig.pwd;
+    wifi.mode(wifi.STATION);
+    wifi.start();
+    wifi.sta.config(station_cfg);
+    wifi.sta.on("got_ip", function(ev, info)
+        print("WiFi Connected\n");
+        wget(config.update_addr, "versao.lua", "versao_temp.lua", check_version);
+    end);
+end
+
+--Funcao que cria o arquivo de flag para a atualizacao
+function updatemanager.setup_update()
+    print("Antes de criar o arquivo de flag");
+    bleEnable(0, function()
+        file.open("update_flag_file.txt",'w');
+        print("Depois de criar o arquivo de flag");
+        file.close();
+        reset();
     end);
 end
 

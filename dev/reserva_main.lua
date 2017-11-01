@@ -67,21 +67,13 @@ end
 --Callback de quando o buffer dos beacons forem salvos em um arquivo
 function buffer_saved()
     mainTimer:alarm(config.bluetooth_period * 1000, tmr.ALARM_SINGLE, alarm_fired);
-	--SOMENTE PARA TESTE:
-	--updatemanager.update(files_sent);
 end
 
 --Callback de quando os arquivos forem enviados
 function files_sent()
     if update_time == true then
         update_time = false;
-        print("Antes de criar o arquivo de flag");
-        bleEnable(0, function()
-            file.open("update_flag_file.txt",'w');
-            print("Depois de criar o arquivo de flag");
-            file.close();
-            reset();
-        end);
+        updatemanager.setup_update();
     else
         beacons.saveBuffer(buffer_saved,bluetooh_period_counter);
         --mainTimer:alarm(config.bluetooth_period * 1000, tmr.ALARM_SINGLE, alarm_fired);

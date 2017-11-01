@@ -6,5 +6,7 @@ config.bluetooth_period = 15;
 config.upload_period = 4;
 --De quanto em quanto tempo verifica se há atualização, em minutos
 config.update_period = 2;
+--Diretorio dos arquivos de atualizacao remota
+config.update_addr = "mbboing.github.io/iot-no-varejo/";
 
 return config;

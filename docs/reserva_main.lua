@@ -73,8 +73,7 @@ end
 function files_sent()
     if update_time == true then
         update_time = false;
-        print("Fazer o update");
-        updatemanager.update(files_sent);
+        updatemanager.setup_update();
     else
         beacons.saveBuffer(buffer_saved,bluetooh_period_counter);
         --mainTimer:alarm(config.bluetooth_period * 1000, tmr.ALARM_SINGLE, alarm_fired);
@@ -85,7 +84,7 @@ end
 function alarm_fired()
     local remaining, used, total=file.fsinfo()
     local currHeap = node.heap();
-    print("Versao 2");
+    print("Versao 1");
     uart.write(0,"\n**** Heap=".. currHeap .. " " .. string.format("%.2f",(currHeap/initHeap)*100) .. "% [" .. lastHeap - currHeap .. "] Remaining disk=".. remaining)
     lastHeap = currHeap;
     if  node.heap() < 20000 then 
@@ -115,5 +114,13 @@ function net_ready()
     end
 end;
 
---Primeira funcao a ser executada, inicializacao da configuracao de rede
-netmanager.start(net_ready);
+--Inicialmente, verifica se deve fazer a atualizacao, atraves do arquivo de flag
+if file.open("update_flag_file.txt",'r') then
+    file.close();
+    file.remove("update_flag_file.txt");
+    print("Fazer o update");
+    updatemanager.update();
+else
+    --Senão inicia o programa normalmente, comecando com a configuracao de rede
+    netmanager.start(net_ready);
+end
