@@ -9,7 +9,7 @@ local versao = {
 ["reserva_config.lua"] = 220,
 ["reserva_main.lua"] = 3718,
 ["reserva_rede.lua"] = 4232,
-["reserva_submit.lua"] = 4750
+["reserva_submit.lua"] = 4748
 
 }
 

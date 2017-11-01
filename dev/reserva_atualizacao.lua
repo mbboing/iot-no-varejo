@@ -25,8 +25,9 @@ local function cancel_update()
             file.remove(file_name);
         end
     end
-    bleEnable(1, update_files_done);
+    --bleEnable(1, update_files_done);
     print("Cancel update");
+    reset();
 end
 
 local function wget(endereco, arquivo, saida, callback, porta)
@@ -157,25 +158,12 @@ local function check_version(file_size)
 			-- Fazer a atualizacao dos arquivos
 			for k,_ in pairs(versao_atual) do
 				if k ~= "data" then
+					print(k);
 					table.insert(arquivos, k);
 				end
 			end
 			local file_name = arquivos[qnt_arquivos_baixados+1];
 			wget("mbboing.github.io/iot-no-varejo/", file_name, string.gsub(file_name,"%.","_temp."), update_next_file);
-
-			--[[wget("mbboing.github.io/iot-no-varejo/", "reserva_beacons.lua", "beacons1.lua", function()
-					wget("mbboing.github.io/iot-no-varejo/", "reserva_beacons.lua", "beacons2.lua", function()
-						wget("mbboing.github.io/iot-no-varejo/", "reserva_beacons.lua", "beacons3.lua", function()
-						    wget("mbboing.github.io/iot-no-varejo/", "reserva_beacons.lua", "beacons4.lua", function()
-						        wget("mbboing.github.io/iot-no-varejo/", "reserva_beacons.lua", "beacons5.lua", function()
-						            wget("mbboing.github.io/iot-no-varejo/", "reserva_beacons.lua", "beacons6.lua");
-						        end);
-						    end);
-						end);
-					end);
-				end);
-]]--
-
 		else
 		    print("Versão atual");
 		    cancel_update();
@@ -186,12 +174,22 @@ local function check_version(file_size)
 end
 
 function updatemanager.update(updatefiles_cb)
-    if type(updatefiles_cb)=="function" then
-        print("Parametro eh uma funcao");
-        update_files_done = updatefiles_cb;
-    end
-	bleEnable(0, function(err)
-		print("Desligou o bluetooth");
+    --if type(updatefiles_cb)=="function" then
+    --    print("Parametro eh uma funcao");
+    --    update_files_done = updatefiles_cb;
+    --end
+	--bleEnable(0, function(err)
+	--	print("Desligou o bluetooth");
+    --    wget("mbboing.github.io/iot-no-varejo/", "versao.lua", "versao_temp.lua", check_version);
+    --end);
+    station_cfg={};
+    station_cfg.ssid="terra_iot";
+    station_cfg.pwd="projeto_iot";
+    wifi.mode(wifi.STATION);
+    wifi.start();
+    wifi.sta.config(station_cfg);
+    wifi.sta.on("got_ip", function(ev, info)
+        print("WiFi Connected\n");
         wget("mbboing.github.io/iot-no-varejo/", "versao.lua", "versao_temp.lua", check_version);
     end);
 end
